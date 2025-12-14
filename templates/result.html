@@ -3,14 +3,210 @@
 <head>
     <title>Weather Result</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <!-- Leaflet CSS for Map -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
 </head>
 <body>
-    <div class="container">
-        <h2>Weather in {{ weather.city }}</h2>
-        <p>🌡 Temperature: {{ weather.temperature }} °C</p>
-        <p>💧 Humidity: {{ weather.humidity }}%</p>
-        <p>☁️ Description: {{ weather.description }}</p>
-        <a href="/">🔙 Back</a>
+    <div class="container weather-container">
+        <div class="header-bar">
+            <h2>🌤 Weather App</h2>
+            <div class="user-info">
+                <span>{{ username }}</span>
+                <a href="{{ url_for('logout') }}" class="logout-btn">Logout</a>
+            </div>
+        </div>
+
+        <!-- Main Weather Card -->
+        <div class="weather-main">
+            <div class="location-header">
+                <h1>{{ weather.city }}, {{ weather.country }}</h1>
+                <p class="weather-condition">{{ weather.description }}</p>
+            </div>
+
+            <div class="temperature-section">
+                <div class="current-temp">
+                    <span class="temp-value">{{ weather.temperature }}°C</span>
+                    <img src="https://openweathermap.org/img/wn/{{ weather.icon }}@4x.png" alt="{{ weather.description }}" class="weather-icon">
+                </div>
+                <div class="feels-like">
+                    Feels like <span class="feels-value">{{ weather.feels_like }}°C</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Weather Content Wrapper -->
+        <div class="weather-content-wrapper">
+            <!-- Left Side: Weather Details -->
+            <div class="weather-details-section">
+                <!-- Weather Details Grid -->
+                <div class="weather-details-grid">
+                    <!-- Temperature Range -->
+                    <div class="detail-card">
+                        <div class="detail-icon">🌡️</div>
+                        <div class="detail-content">
+                            <p class="detail-label">Temperature</p>
+                            <p class="detail-value">Min: {{ weather.temp_min }}°C</p>
+                            <p class="detail-value">Max: {{ weather.temp_max }}°C</p>
+                        </div>
+                    </div>
+
+                    <!-- Humidity -->
+                    <div class="detail-card">
+                        <div class="detail-icon">💧</div>
+                        <div class="detail-content">
+                            <p class="detail-label">Humidity</p>
+                            <p class="detail-value">{{ weather.humidity }}%</p>
+                        </div>
+                    </div>
+
+                    <!-- Pressure -->
+                    <div class="detail-card">
+                        <div class="detail-icon">🔽</div>
+                        <div class="detail-content">
+                            <p class="detail-label">Pressure</p>
+                            <p class="detail-value">{{ weather.pressure }} hPa</p>
+                        </div>
+                    </div>
+
+                    <!-- Visibility -->
+                    <div class="detail-card">
+                        <div class="detail-icon">👁️</div>
+                        <div class="detail-content">
+                            <p class="detail-label">Visibility</p>
+                            <p class="detail-value">{{ weather.visibility }} km</p>
+                        </div>
+                    </div>
+
+                    <!-- Wind Speed -->
+                    <div class="detail-card">
+                        <div class="detail-icon">💨</div>
+                        <div class="detail-content">
+                            <p class="detail-label">Wind Speed</p>
+                            <p class="detail-value">{{ weather.wind_speed }} m/s</p>
+                            <p class="detail-value">{{ weather.wind_direction }}</p>
+                        </div>
+                    </div>
+
+                    <!-- Wind Gust -->
+                    <div class="detail-card">
+                        <div class="detail-icon">🌪️</div>
+                        <div class="detail-content">
+                            <p class="detail-label">Wind Gust</p>
+                            <p class="detail-value">{{ weather.wind_gust }} m/s</p>
+                        </div>
+                    </div>
+
+                    <!-- Cloud Coverage -->
+                    <div class="detail-card">
+                        <div class="detail-icon">☁️</div>
+                        <div class="detail-content">
+                            <p class="detail-label">Cloud Coverage</p>
+                            <p class="detail-value">{{ weather.cloudiness }}%</p>
+                        </div>
+                    </div>
+
+                    <!-- Sunrise -->
+                    <div class="detail-card">
+                        <div class="detail-icon">🌅</div>
+                        <div class="detail-content">
+                            <p class="detail-label">Sunrise</p>
+                            <p class="detail-value">{{ weather.sunrise }}</p>
+                        </div>
+                    </div>
+
+                    <!-- Sunset -->
+                    <div class="detail-card">
+                        <div class="detail-icon">🌇</div>
+                        <div class="detail-content">
+                            <p class="detail-label">Sunset</p>
+                            <p class="detail-value">{{ weather.sunset }}</p>
+                        </div>
+                    </div>
+
+                    <!-- Rain -->
+                    <div class="detail-card">
+                        <div class="detail-icon">🌧️</div>
+                        <div class="detail-content">
+                            <p class="detail-label">Rainfall (1h)</p>
+                            <p class="detail-value">{{ weather.rain }} mm</p>
+                        </div>
+                    </div>
+
+                    <!-- Snow -->
+                    <div class="detail-card">
+                        <div class="detail-icon">❄️</div>
+                        <div class="detail-content">
+                            <p class="detail-label">Snowfall (1h)</p>
+                            <p class="detail-value">{{ weather.snow }} mm</p>
+                        </div>
+                    </div>
+
+                    <!-- Condition -->
+                    <div class="detail-card">
+                        <div class="detail-icon">📊</div>
+                        <div class="detail-content">
+                            <p class="detail-label">Condition</p>
+                            <p class="detail-value">{{ weather.main_condition }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Side: Location Map -->
+            <div class="location-map-container">
+                <div class="location-map-section">
+                    <h2 class="map-title">📍 Location</h2>
+                    <div class="map-info">
+                        <div class="coordinates">
+                            <div class="coord-item">
+                                <span class="coord-label">Latitude</span>
+                                <span class="coord-value">{{ weather.latitude }}°</span>
+                            </div>
+                            <div class="coord-item">
+                                <span class="coord-label">Longitude</span>
+                                <span class="coord-value">{{ weather.longitude }}°</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="weatherMap" class="weather-map"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 5-Day Forecast Link -->
+        <div class="forecast-link-section">
+            <a href="{{ url_for('forecast', city=weather.city) }}" class="btn-forecast">📅 View 5-Day Forecast</a>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="action-buttons">
+            <a href="{{ url_for('index') }}" class="btn-back">🔙 New Search</a>
+        </div>
     </div>
+
+    <!-- Leaflet JavaScript for Map -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+    <script>
+        // Initialize map
+        const map = L.map('weatherMap').setView([{{ weather.latitude }}, {{ weather.longitude }}], 11);
+        
+        // Add OpenStreetMap tiles
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors',
+            maxZoom: 19
+        }).addTo(map);
+        
+        // Add marker for the city
+        const marker = L.marker([{{ weather.latitude }}, {{ weather.longitude }}]).addTo(map);
+        marker.bindPopup('<b>{{ weather.city }}, {{ weather.country }}</b><br>{{ weather.description }}').openPopup();
+        
+        // Add a circle to show approximate area
+        L.circle([{{ weather.latitude }}, {{ weather.longitude }}], {
+            color: '#667eea',
+            fillColor: '#764ba2',
+            fillOpacity: 0.1,
+            radius: 5000
+        }).addTo(map);
+    </script>
 </body>
 </html>

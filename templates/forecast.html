@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>5-Day Forecast</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <!-- Leaflet CSS for Map -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+</head>
+<body>
+    <div class="container forecast-container">
+        <div class="header-bar">
+            <h2>🌤 Weather App</h2>
+            <div class="user-info">
+                <span>{{ username }}</span>
+                <a href="{{ url_for('logout') }}" class="logout-btn">Logout</a>
+            </div>
+        </div>
+
+        <!-- Forecast Header -->
+        <div class="forecast-header">
+            <h1>5-Day Weather Forecast</h1>
+            <p class="forecast-location">{{ city }}, {{ country }}</p>
+        </div>
+
+        <!-- Detailed Forecast Cards -->
+        <div class="forecast-detailed-grid">
+            {% for day in forecast %}
+            <div class="forecast-detailed-card">
+                <div class="forecast-card-header">
+                    <div>
+                        <h3 class="forecast-day-name">{{ day.day }}</h3>
+                        <p class="forecast-card-date">{{ day.date }}</p>
+                    </div>
+                    <img src="https://openweathermap.org/img/wn/{{ day.icon }}@4x.png" alt="{{ day.description }}" class="forecast-large-icon">
+                </div>
+
+                <div class="forecast-card-content">
+                    <p class="forecast-card-description">{{ day.description }}</p>
+                    
+                    <div class="forecast-card-temps">
+                        <div class="temp-box max">
+                            <span class="temp-label">Max</span>
+                            <span class="temp-number">{{ day.temp_max }}°C</span>
+                        </div>
+                        <div class="temp-box min">
+                            <span class="temp-label">Min</span>
+                            <span class="temp-number">{{ day.temp_min }}°C</span>
+                        </div>
+                        <div class="temp-box current">
+                            <span class="temp-label">Avg</span>
+                            <span class="temp-number">{{ day.temp }}°C</span>
+                        </div>
+                    </div>
+
+                    <div class="forecast-card-details">
+                        <div class="forecast-detail-item">
+                            <span class="detail-icon">💧</span>
+                            <div class="detail-text">
+                                <p class="detail-label">Humidity</p>
+                                <p class="detail-value">{{ day.humidity }}%</p>
+                            </div>
+                        </div>
+
+                        <div class="forecast-detail-item">
+                            <span class="detail-icon">💨</span>
+                            <div class="detail-text">
+                                <p class="detail-label">Wind Speed</p>
+                                <p class="detail-value">{{ day.wind_speed }} m/s</p>
+                            </div>
+                        </div>
+
+                        <div class="forecast-detail-item">
+                            <span class="detail-icon">🌧️</span>
+                            <div class="detail-text">
+                                <p class="detail-label">Rain Chance</p>
+                                <p class="detail-value">{{ day.rain_chance }}%</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Location Map Section -->
+        <div class="forecast-map-section">
+            <h2 class="map-title">📍 Location Map</h2>
+            <div class="map-info">
+                <p class="location-text">{{ city }}, {{ country }}</p>
+                <div class="forecast-coordinates">
+                    <span class="coord-item">
+                        <strong>Latitude:</strong> {{ latitude }}°
+                    </span>
+                    <span class="coord-item">
+                        <strong>Longitude:</strong> {{ longitude }}°
+                    </span>
+                </div>
+            </div>
+            <div id="forecastWeatherMap" class="forecast-weather-map"></div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="action-buttons forecast-action-buttons">
+            <a href="javascript:history.back();" class="btn-back btn-back-weather">⬅️ Back to Weather</a>
+            <a href="{{ url_for('index') }}" class="btn-back">🔙 New Search</a>
+        </div>
+    </div>
+
+    <!-- Leaflet JavaScript for Map -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+    <script>
+        // Initialize map with actual coordinates from backend
+        const latitude = {{ latitude }};
+        const longitude = {{ longitude }};
+        const forecastMap = L.map('forecastWeatherMap').setView([latitude, longitude], 11);
+        
+        // Add OpenStreetMap tiles
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors',
+            maxZoom: 19
+        }).addTo(forecastMap);
+        
+        // Add marker for the city
+        const marker = L.marker([latitude, longitude]).addTo(forecastMap);
+        marker.bindPopup('<b>{{ city }}, {{ country }}</b><br><i>5-Day Forecast Location</i>').openPopup();
+        
+        // Add a circle to show approximate area
+        L.circle([latitude, longitude], {
+            color: '#667eea',
+            fillColor: '#764ba2',
+            fillOpacity: 0.1,
+            radius: 5000
+        }).addTo(forecastMap);
+    </script>
+</body>
+</html>

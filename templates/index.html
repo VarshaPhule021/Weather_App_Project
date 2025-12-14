@@ -1,14 +1,20 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Weather App</title>
+    <title>Weather App - Search</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
     <div class="container">
-        <h2>🌤 Weather App</h2>
+        <div class="header-bar">
+            <h2>🌤 Weather App</h2>
+            <div class="user-info">
+                <span>{{ username }}</span>
+                <a href="{{ url_for('logout') }}" class="logout-btn">Logout</a>
+            </div>
+        </div>
         <form method="POST">
-            <input type="text" name="city" placeholder="Enter city name" required>
+            <input type="text" name="city" placeholder="Enter city name" required autofocus>
             <button type="submit">Get Weather</button>
         </form>
         {% if error %}
