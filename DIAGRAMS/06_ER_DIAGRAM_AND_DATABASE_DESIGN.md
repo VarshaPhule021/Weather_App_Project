@@ -1,53 +1,118 @@
-# ER Diagram & Database Design - Weather App
+# ER Diagram & Database Design - Weather App (Modular Architecture)
 
 ## Overview
-The Entity-Relationship (ER) diagram shows the data structures and relationships in the Weather App.
+The Entity-Relationship (ER) diagram shows the data structures and relationships in the Weather App with the new modular architecture.
 
 ---
 
 ## ER Diagram (ASCII)
 
 ```
-┌─────────────────────────┐
-│         USERS           │
-├─────────────────────────┤
-│ PK  email       (str)   │
-│     username    (str)   │
-│     password    (str)   │
-│     created_at  (date)  │
-├─────────────────────────┤
-│ One user can have       │
-│ multiple sessions       │
-└──────────────┬──────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│                      USERS TABLE                                │
+├─────────────────────────────────────────────────────────────────┤
+│ email           (str, PK)      - User's email address           │
+│ username        (str)          - User's display name            │
+│ password        (str)          - Hashed password (bcrypt)       │
+│ created_at      (datetime)     - Account creation timestamp     │
+├─────────────────────────────────────────────────────────────────┤
+│ Relationships:                                                  │
+│ - One User can have one active Session (1:1)                   │
+│ - User data persisted in users.json file                        │
+└──────────────┬──────────────────────────────────────────────────┘
                │
-               │ 1:Many
+               │ 1:1 Relationship (active session)
                │
-┌──────────────▼──────────┐
-│       SESSIONS          │
-├──────────────────────────┤
-│ PK  session_id  (str)   │
-│ FK  email       (str)   │
-│     username    (str)   │
-│     created_at  (date)  │
-│     timeout     (int)   │
-├──────────────────────────┤
-│ One session per user    │
-└─────────────────────────┘
+┌──────────────▼──────────────────────────────────────────────────┐
+│                    SESSIONS TABLE                               │
+├─────────────────────────────────────────────────────────────────┤
+│ user_email      (str, FK)      - Reference to Users.email       │
+│ username        (str)          - Denormalized from User         │
+│ created_at      (datetime)     - Session creation time          │
+│ last_activity   (datetime)     - Last user activity time        │
+├─────────────────────────────────────────────────────────────────┤
+│ Relationships:                                                  │
+│ - Many Sessions per User (current: 1, but design allows >1)    │
+│ - Sessions stored in Flask session (cookies/server-side)       │
+└──────────────────────────────────────────────────────────────────┘
 
 
-┌─────────────────────────┐
-│      WEATHER_DATA       │
-├─────────────────────────┤
-│ PK  search_id   (str)   │
-│ FK  email       (str)   │
-│     city        (str)   │
-│     country     (str)   │
-│     latitude    (float) │
-│     longitude   (float) │
-│     temperature (float) │
-│     feels_like  (float) │
-│     temp_min    (float) │
-│     temp_max    (float) │
+┌─────────────────────────────────────────────────────────────────┐
+│                  WEATHER_DATA (In-Memory)                       │
+├─────────────────────────────────────────────────────────────────┤
+│ Attributes (all from OpenWeather API response):                │
+├─────────────────────────────────────────────────────────────────┤
+│ Location Information:                                           │
+│ ├─ city               (str)          - City name                │
+│ ├─ country            (str)          - Country code (2-letter)  │
+│ ├─ latitude           (float)        - Geographic latitude      │
+│ └─ longitude          (float)        - Geographic longitude     │
+│                                                                 │
+│ Temperature Information:                                        │
+│ ├─ temperature        (float)        - Current temp (°C)        │
+│ ├─ feels_like         (float)        - Perceived temp (°C)      │
+│ ├─ temp_min           (float)        - Daily minimum (°C)       │
+│ └─ temp_max           (float)        - Daily maximum (°C)       │
+│                                                                 │
+│ Atmospheric Data:                                               │
+│ ├─ humidity           (int)          - Relative humidity (%)    │
+│ ├─ pressure           (int)          - Atmospheric pressure     │
+│ ├─ visibility         (float)        - Visibility (m)           │
+│ └─ cloudiness         (int)          - Cloud coverage (%)       │
+│                                                                 │
+│ Wind Information:                                               │
+│ ├─ wind_speed         (float)        - Wind speed (m/s)        │
+│ ├─ wind_deg           (int)          - Wind direction (°)       │
+│ ├─ wind_direction     (str)          - Cardinal direction       │
+│ │                    (N/NE/E/SE/S/SW/W/NW)                    │
+│ └─ wind_gust          (float)        - Gust speed (m/s)        │
+│                                                                 │
+│ Weather Condition:                                              │
+│ ├─ main_condition     (str)          - Main weather (Clouds)    │
+│ ├─ description        (str)          - Detailed description     │
+│ ├─ icon               (str)          - Weather icon code        │
+│ ├─ rain               (float)        - Rainfall (mm)            │
+│ └─ snow               (float)        - Snowfall (mm)            │
+│                                                                 │
+│ Time Information:                                               │
+│ ├─ sunrise            (str)          - Sunrise time             │
+│ ├─ sunset             (str)          - Sunset time              │
+│ ├─ timezone           (int)          - Timezone offset (hours)  │
+│                                                                 │
+├─────────────────────────────────────────────────────────────────┤
+│ Characteristics:                                                │
+│ - Created from OpenWeather API response                         │
+│ - In-memory only (not persisted)                                │
+│ - Immutable after creation                                      │
+│ - Can be converted to Dict for JSON response                    │
+└─────────────────────────────────────────────────────────────────┘
+
+
+┌─────────────────────────────────────────────────────────────────┐
+│                 FORECAST_DAY (In-Memory List)                   │
+├─────────────────────────────────────────────────────────────────┤
+│ date             (str)          - Date in YYYY-MM-DD format     │
+│ day              (str)          - Day name (Monday, etc)        │
+│ temperature      (float)        - Average temp (°C)             │
+│ temp_max         (float)        - Maximum temp (°C)             │
+│ temp_min         (float)        - Minimum temp (°C)             │
+│ humidity         (int)          - Humidity (%)                  │
+│ description      (str)          - Weather description           │
+│ icon             (str)          - Weather icon code             │
+│ wind_speed       (float)        - Wind speed (m/s)             │
+│ rain_chance      (float)        - Precipitation probability (%) │
+├─────────────────────────────────────────────────────────────────┤
+│ Characteristics:                                                │
+│ - List of 5 ForecastDay objects (5-day forecast)              │
+│ - Created from OpenWeather forecast API response               │
+│ - In-memory only (not persisted)                                │
+│ - One object per forecast day                                   │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Data Model Architecture
 │     humidity    (int)   │
 │     pressure    (int)   │
 │     visibility  (float) │

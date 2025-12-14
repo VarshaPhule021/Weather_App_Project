@@ -1,11 +1,11 @@
-# Object Diagram - Weather App
+# Object Diagram - Weather App (Modular Architecture)
 
 ## Overview
-Object diagrams show the instances of classes (objects) and their relationships at a specific moment in time.
+The object diagram shows instances of classes and their relationships during runtime execution using the new modular architecture with UserService, WeatherService, and data models.
 
 ---
 
-## Object Diagram 1: User Login Instance
+## Object Diagram: User Registration & Login
 
 ```
 Scenario: User "john@example.com" logged in

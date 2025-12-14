@@ -1,11 +1,139 @@
-# Activity Diagram - Weather App
+# Activity Diagram - Weather App (Modular Architecture)
 
 ## Overview
-Activity diagrams show the flow of activities and decisions in the system.
+Activity diagrams show the flow of activities and decisions in the system with the new modular architecture emphasizing service layer interactions.
 
 ---
 
-## Activity Diagram 1: User Login Flow
+## Activity Diagram 1: User Registration Flow
+
+```
+                            START
+                             │
+                             ▼
+                    ┌──────────────────┐
+                    │  User Navigates  │
+                    │  to Signup Page  │
+                    └────────┬─────────┘
+                             │
+                             ▼
+                    ┌──────────────────┐
+                    │ Display Signup   │
+                    │ Form             │
+                    └────────┬─────────┘
+                             │
+                             ▼
+                    ┌──────────────────┐
+                    │ User Enters      │
+                    │ Email, Username, │
+                    │ Password         │
+                    └────────┬─────────┘
+                             │
+                             ▼
+                    ┌──────────────────┐
+                    │ Submit Form      │
+                    │ (POST /signup)   │
+                    └────────┬─────────┘
+                             │
+                             ▼
+                    ┌──────────────────┐
+                    │ Flask validates  │
+                    │ Input (non-empty)│
+                    └─────┬──────┬─────┘
+                          │      │
+                      Valid   Invalid
+                          │      │
+                          │      ▼
+                          │  ┌──────────────────┐
+                          │  │ Return Error     │
+                          │  │ Message to User  │
+                          │  └────┬─────────────┘
+                          │       │
+                          │       └──→ [Re-display Form]
+                          │
+                          ▼
+                    ┌──────────────────┐
+                    │ Call UserService │
+                    │ .register_user() │
+                    └────────┬─────────┘
+                             │
+                             ▼
+                    ┌──────────────────┐
+                    │ UserService:     │
+                    │ Load users.json  │
+                    └────────┬─────────┘
+                             │
+                             ▼
+                    ┌──────────────────┐
+                    │ Check if email   │
+                    │ already exists   │
+                    └─────┬──────┬─────┘
+                          │      │
+                      Unique  Exists
+                          │      │
+                          │      ▼
+                          │  ┌──────────────────┐
+                          │  │ Return False     │
+                          │  │ (Email taken)    │
+                          │  └────┬─────────────┘
+                          │       │
+                          │       ▼
+                          │  ┌──────────────────┐
+                          │  │ Flask returns    │
+                          │  │ error page       │
+                          │  └──────────────────┘
+                          │
+                          ▼
+                    ┌──────────────────┐
+                    │ Hash password    │
+                    │ (security)       │
+                    └────────┬─────────┘
+                             │
+                             ▼
+                    ┌──────────────────┐
+                    │ Create User      │
+                    │ object           │
+                    └────────┬─────────┘
+                             │
+                             ▼
+                    ┌──────────────────┐
+                    │ Save to users.   │
+                    │ json file        │
+                    └─────┬──────┬─────┘
+                          │      │
+                      Success  Failure
+                          │      │
+                          │      ▼
+                          │  ┌──────────────────┐
+                          │  │ Log Error        │
+                          │  │ Return False     │
+                          │  └─────────────────┘
+                          │
+                          ▼
+                    ┌──────────────────┐
+                    │ Log registration │
+                    │ (INFO level)     │
+                    └────────┬─────────┘
+                             │
+                             ▼
+                    ┌──────────────────┐
+                    │ Flask redirects  │
+                    │ to login page    │
+                    └────────┬─────────┘
+                             │
+                             ▼
+                    ┌──────────────────┐
+                    │ Display success  │
+                    │ message          │
+                    └────────┬─────────┘
+                             │
+                             ▼
+                           END
+```
+
+---
+
+## Activity Diagram 2: User Login Flow
 
 ```
                             START
@@ -31,23 +159,356 @@ Activity diagrams show the flow of activities and decisions in the system.
                              ▼
                     ┌──────────────────┐
                     │ Submit Form      │
+                    │ (POST /login)    │
                     └────────┬─────────┘
                              │
                              ▼
                     ┌──────────────────┐
-                    │ Validate Input   │
-                    │ (Empty Check)    │
+                    │ Flask validates  │
+                    │ Input (non-empty)│
                     └─────┬──────┬─────┘
                           │      │
                       Valid   Invalid
                           │      │
                           │      ▼
-                          │  ┌──────────────┐
-                          │  │ Show Error   │
-                          │  │ Message      │
-                          │  └────┬─────────┘
+                          │  ┌──────────────────┐
+                          │  │ Return Error     │
+                          │  │ Page (400)       │
+                          │  └──────────────────┘
+                          │
+                          ▼
+                    ┌──────────────────────┐
+                    │ Call UserService     │
+                    │ .authenticate_user() │
+                    └────────┬─────────────┘
+                             │
+                             ▼
+                    ┌──────────────────┐
+                    │ UserService:     │
+                    │ Load users.json  │
+                    └────────┬─────────┘
+                             │
+                             ▼
+                    ┌──────────────────┐
+                    │ Find user by     │
+                    │ email            │
+                    └─────┬──────┬─────┘
+                          │      │
+                      Found   Not Found
+                          │      │
+                          │      ▼
+                          │  ┌──────────────────┐
+                          │  │ Log WARNING      │
+                          │  │ Return None      │
+                          │  └────┬─────────────┘
                           │       │
-                          │       └──────┐
+                          │       ▼
+                          │  ┌──────────────────┐
+                          │  │ Flask returns    │
+                          │  │ error page       │
+                          │  └──────────────────┘
+                          │
+                          ▼
+                    ┌──────────────────┐
+                    │ Verify password  │
+                    │ (hash match)     │
+                    └─────┬──────┬─────┘
+                          │      │
+                      Match  No Match
+                          │      │
+                          │      ▼
+                          │  ┌──────────────────┐
+                          │  │ Log WARNING      │
+                          │  │ Return None      │
+                          │  └────┬─────────────┘
+                          │       │
+                          │       ▼
+                          │  ┌──────────────────┐
+                          │  │ Flask returns    │
+                          │  │ error page       │
+                          │  └──────────────────┘
+                          │
+                          ▼
+                    ┌──────────────────┐
+                    │ Create User      │
+                    │ object           │
+                    └────────┬─────────┘
+                             │
+                             ▼
+                    ┌──────────────────┐
+                    │ Return User to   │
+                    │ Flask            │
+                    └────────┬─────────┘
+                             │
+                             ▼
+                    ┌──────────────────┐
+                    │ Create Session   │
+                    │ (session_obj)    │
+                    └────────┬─────────┘
+                             │
+                             ▼
+                    ┌──────────────────┐
+                    │ Create Session   │
+                    │ model            │
+                    └────────┬─────────┘
+                             │
+                             ▼
+                    ┌──────────────────┐
+                    │ Set session      │
+                    │ in cookies       │
+                    └────────┬─────────┘
+                             │
+                             ▼
+                    ┌──────────────────┐
+                    │ Log INFO         │
+                    │ "Login success"  │
+                    └────────┬─────────┘
+                             │
+                             ▼
+                    ┌──────────────────┐
+                    │ Flask redirects  │
+                    │ to /weather      │
+                    └────────┬─────────┘
+                             │
+                             ▼
+                    ┌──────────────────┐
+                    │ Display weather  │
+                    │ search page      │
+                    └────────┬─────────┘
+                             │
+                             ▼
+                           END
+```
+
+---
+
+## Activity Diagram 3: Weather Search Flow
+
+```
+                            START
+                             │
+                             ▼
+                    ┌──────────────────┐
+                    │ User on          │
+                    │ /weather page    │
+                    └────────┬─────────┘
+                             │
+                             ▼
+                    ┌──────────────────┐
+                    │ Check Session    │
+                    │ (authenticated?) │
+                    └─────┬──────┬─────┘
+                          │      │
+                      Valid   Invalid
+                          │      │
+                          │      ▼
+                          │  ┌──────────────────┐
+                          │  │ Redirect to      │
+                          │  │ /login           │
+                          │  └──────────────────┘
+                          │
+                          ▼
+                    ┌──────────────────┐
+                    │ User enters      │
+                    │ city name        │
+                    └────────┬─────────┘
+                             │
+                             ▼
+                    ┌──────────────────┐
+                    │ Submit form      │
+                    │ (POST /weather)  │
+                    └────────┬─────────┘
+                             │
+                             ▼
+                    ┌──────────────────┐
+                    │ Flask validates  │
+                    │ city input       │
+                    └─────┬──────┬─────┘
+                          │      │
+                      Valid   Invalid
+                          │      │
+                          │      ▼
+                          │  ┌──────────────────┐
+                          │  │ Return error     │
+                          │  │ page (400)       │
+                          │  └──────────────────┘
+                          │
+                          ▼
+                    ┌──────────────────────────┐
+                    │ Call WeatherService      │
+                    │ .get_current_weather()   │
+                    └────────┬─────────────────┘
+                             │
+                             ▼
+                    ┌──────────────────┐
+                    │ WeatherService:  │
+                    │ Make HTTP GET to │
+                    │ OpenWeather API  │
+                    └─────┬──────┬─────┘
+                          │      │
+                      Success Timeout/Error
+                          │      │
+                          │      ▼
+                          │  ┌──────────────────┐
+                          │  │ Log ERROR        │
+                          │  │ Return None      │
+                          │  └────┬─────────────┘
+                          │       │
+                          │       ▼
+                          │  ┌──────────────────┐
+                          │  │ Flask returns    │
+                          │  │ error page       │
+                          │  └──────────────────┘
+                          │
+                          ▼
+                    ┌──────────────────┐
+                    │ Parse JSON       │
+                    │ response         │
+                    └────────┬─────────┘
+                             │
+                             ▼
+                    ┌──────────────────┐
+                    │ Create           │
+                    │ WeatherData obj  │
+                    └────────┬─────────┘
+                             │
+                             ▼
+                    ┌──────────────────┐
+                    │ Calculate wind   │
+                    │ direction from   │
+                    │ degrees          │
+                    └────────┬─────────┘
+                             │
+                             ▼
+                    ┌──────────────────────────┐
+                    │ Call WeatherService      │
+                    │ .get_forecast()          │
+                    └────────┬─────────────────┘
+                             │
+                             ▼
+                    ┌──────────────────┐
+                    │ WeatherService:  │
+                    │ Make HTTP GET to │
+                    │ Forecast API     │
+                    └─────┬──────┬─────┘
+                          │      │
+                      Success Timeout/Error
+                          │      │
+                          │      ▼
+                          │  ┌──────────────────┐
+                          │  │ Log ERROR        │
+                          │  │ Return None      │
+                          │  └────┬─────────────┘
+                          │       │
+                          │       ▼
+                          │  ┌──────────────────┐
+                          │  │ Flask renders    │
+                          │  │ with only current│
+                          │  │ weather          │
+                          │  └──────────────────┘
+                          │
+                          ▼
+                    ┌──────────────────┐
+                    │ Parse JSON       │
+                    │ response         │
+                    └────────┬─────────┘
+                             │
+                             ▼
+                    ┌──────────────────┐
+                    │ Extract 5 days   │
+                    │ of forecast      │
+                    └────────┬─────────┘
+                             │
+                             ▼
+                    ┌──────────────────┐
+                    │ Create           │
+                    │ ForecastDay objs │
+                    │ for each day     │
+                    └────────┬─────────┘
+                             │
+                             ▼
+                    ┌──────────────────┐
+                    │ Log INFO         │
+                    │ "Weather fetched"│
+                    └────────┬─────────┘
+                             │
+                             ▼
+                    ┌──────────────────┐
+                    │ Flask renders    │
+                    │ result.html with │
+                    │ all data         │
+                    └────────┬─────────┘
+                             │
+                             ▼
+                    ┌──────────────────┐
+                    │ Display weather  │
+                    │ & forecast to    │
+                    │ user             │
+                    └────────┬─────────┘
+                             │
+                             ▼
+                           END
+```
+
+---
+
+## Activity Diagram 4: Logout Flow
+
+```
+                            START
+                             │
+                             ▼
+                    ┌──────────────────┐
+                    │ User clicks      │
+                    │ Logout button    │
+                    └────────┬─────────┘
+                             │
+                             ▼
+                    ┌──────────────────┐
+                    │ GET /logout      │
+                    └────────┬─────────┘
+                             │
+                             ▼
+                    ┌──────────────────┐
+                    │ Flask gets       │
+                    │ user from session│
+                    └────────┬─────────┘
+                             │
+                             ▼
+                    ┌──────────────────┐
+                    │ Log INFO         │
+                    │ "User logged out"│
+                    └────────┬─────────┘
+                             │
+                             ▼
+                    ┌──────────────────┐
+                    │ Clear session    │
+                    │ dict             │
+                    └────────┬─────────┘
+                             │
+                             ▼
+                    ┌──────────────────┐
+                    │ Clear Flask      │
+                    │ session cookie   │
+                    └────────┬─────────┘
+                             │
+                             ▼
+                    ┌──────────────────┐
+                    │ Redirect to      │
+                    │ /login           │
+                    └────────┬─────────┘
+                             │
+                             ▼
+                    ┌──────────────────┐
+                    │ Display login    │
+                    │ page             │
+                    └────────┬─────────┘
+                             │
+                             ▼
+                           END
+```
+
+---
                           │              │
                           ▼              ▼
                     ┌──────────────┐  ┌──────────┐

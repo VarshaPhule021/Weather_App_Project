@@ -1,50 +1,257 @@
-# Use Case Diagram - Weather App
+# Use Case Diagram - Weather App (Modular Architecture)
 
 ## Overview
-The use case diagram shows interactions between users and the system.
+The use case diagram shows interactions between users and the system with the new modular architecture emphasizing separation of concerns (UserService, WeatherService).
 
 ---
 
 ## Use Case Diagram (ASCII)
 
 ```
-                                    ┌─────────────────────────┐
-                                    │    WEATHER APP SYSTEM   │
-                                    └─────────────────────────┘
-                                               │
-        ┌──────────────────┬──────────────────┼──────────────────┬──────────────────┐
-        │                  │                  │                  │                  │
-        ▼                  ▼                  ▼                  ▼                  ▼
-    ┌────────┐        ┌──────────┐      ┌─────────┐        ┌──────────┐      ┌──────────┐
-    │ Sign Up│        │  Login   │      │ Logout  │        │ Search   │      │ View     │
-    │        │        │          │      │ Session │        │ Weather  │      │ Forecast │
-    └────────┘        └──────────┘      └─────────┘        └──────────┘      └──────────┘
-        │                  │                  │                  │                  │
-        └──────────────────┴──────────────────┴──────────────────┴──────────────────┘
-                                       │
-                                       │ extends/uses
-                                       ▼
-                          ┌────────────────────────┐
-                          │   Authenticate User    │
-                          │   (Login Required)     │
-                          └────────────────────────┘
-                                       │
-                    ┌──────────────────┼──────────────────┐
-                    │                  │                  │
-                    ▼                  ▼                  ▼
-            ┌────────────────┐  ┌────────────────┐  ┌──────────────┐
-            │ Fetch Current  │  │ Fetch 5-Day    │  │ Display      │
-            │ Weather Data   │  │ Forecast       │  │ Location Map │
-            │ (API Call)     │  │ (API Call)     │  │ (Leaflet.js) │
-            └────────────────┘  └────────────────┘  └──────────────┘
-                    │                  │                  │
-                    └──────────────────┼──────────────────┘
-                                       │
-                                       ▼
-                          ┌────────────────────────┐
-                          │  Call OpenWeather API  │
-                          │  (External Service)    │
-                          └────────────────────────┘
+                              ┌──────────────────────────────────────┐
+                              │     WEATHER APP SYSTEM               │
+                              │  (Modular Architecture)              │
+                              └──────────────────────────────────────┘
+                                              │
+                  ┌─────────────────┬─────────┼─────────┬──────────────────┐
+                  │                 │         │         │                  │
+                  ▼                 ▼         ▼         ▼                  ▼
+            ┌──────────┐      ┌──────────┐  ┌────────┐ ┌──────────┐  ┌──────────┐
+            │  Sign Up │      │  Login   │  │ Logout │ │ Search   │  │  View    │
+            │ (Register│      │ (Access) │  │        │ │ Weather  │  │ Forecast │
+            │   User)  │      │          │  │        │ │          │  │          │
+            └──────────┘      └──────────┘  └────────┘ └──────────┘  └──────────┘
+                  │                 │          │           │              │
+                  └─────────────────┴──────────┴───────────┴──────────────┘
+                                    │
+                    ┌───────────────┼───────────────┐
+                    │               │               │
+        ┌───────────▼────────┐  ┌──▼──────────┐  ┌─▼────────────────┐
+        │  UserService       │  │ Session     │  │ WeatherService   │
+        │  (manage users)    │  │ Management  │  │ (fetch weather)  │
+        └────────────────────┘  └─────────────┘  └──────────────────┘
+                    │                                    │
+        ┌───────────┴──────────────────┬────────────────┴─────┐
+        │                              │                      │
+        ▼                              ▼                      ▼
+    ┌─────────────┐          ┌────────────────┐    ┌──────────────────┐
+    │ User Model  │          │ WeatherData    │    │ ForecastDay      │
+    │ (Dataclass) │          │ Model          │    │ Model            │
+    │             │          │ (Dataclass)    │    │ (Dataclass)      │
+    │ - email     │          │                │    │                  │
+    │ - username  │          │ - city         │    │ - date           │
+    │ - password  │          │ - country      │    │ - day            │
+    │ - created_at│          │ - temperature  │    │ - temp_max       │
+    │             │          │ - humidity     │    │ - temp_min       │
+    │ Methods:    │          │ - wind_speed   │    │ - humidity       │
+    │ to_dict()   │          │ - ... (20+)    │    │ - description    │
+    └─────────────┘          └────────────────┘    └──────────────────┘
+                                    │
+                    ┌───────────────┼───────────────┐
+                    │               │               │
+                    ▼               ▼               ▼
+            ┌────────────────┐ ┌──────────────┐ ┌──────────────┐
+            │ Fetch Current  │ │ Fetch 5-Day  │ │ Calculate    │
+            │ Weather (API)  │ │ Forecast(API)│ │ Wind Dir     │
+            │                │ │              │ │              │
+            │ Uses requests  │ │ Uses requests│ │ (N, NE, E...)│
+            │ library        │ │ library      │ │              │
+            └────────────────┘ └──────────────┘ └──────────────┘
+                    │               │
+                    └───────────────┼───────────────┐
+                                    │               │
+                                    ▼               ▼
+                        ┌────────────────────────────────┐
+                        │   OpenWeather API              │
+                        │   (External Service)           │
+                        │                                │
+                        │ - /data/2.5/weather (current)  │
+                        │ - /data/2.5/forecast (5-day)   │
+                        └────────────────────────────────┘
+```
+
+---
+
+## Detailed Use Cases
+
+### 1. User Registration
+```
+┌──────────────┐
+│ New User     │
+└────┬─────────┘
+     │ initiates
+     ▼
+┌─────────────────────────────────────────────┐
+│ Sign Up (Register User)                     │
+├─────────────────────────────────────────────┤
+│ Actors: New User                            │
+│ System: UserService                         │
+│                                             │
+│ Flow:                                       │
+│ 1. User enters email, username, password    │
+│ 2. Flask validates input                    │
+│ 3. UserService.register_user() called       │
+│ 4. Service validates email uniqueness       │
+│ 5. Service hashes password                  │
+│ 6. Service saves user to users.json         │
+│ 7. Confirmation sent to user                │
+│                                             │
+│ Preconditions:                              │
+│ - User not already registered               │
+│ - Valid email format                        │
+│ - Password meets requirements               │
+│                                             │
+│ Postconditions:                             │
+│ - User account created                      │
+│ - Data persisted to file                    │
+│ - User redirected to login                  │
+└─────────────────────────────────────────────┘
+```
+
+### 2. User Login
+```
+┌──────────────────┐
+│ Registered User  │
+└────┬─────────────┘
+     │ initiates
+     ▼
+┌──────────────────────────────────────────────┐
+│ Login (Authenticate User)                    │
+├──────────────────────────────────────────────┤
+│ Actors: User                                 │
+│ System: UserService, Session Manager        │
+│                                              │
+│ Flow:                                        │
+│ 1. User enters email and password            │
+│ 2. Flask validates input                     │
+│ 3. UserService.authenticate_user() called    │
+│ 4. Service loads users from users.json       │
+│ 5. Service finds user by email               │
+│ 6. Service verifies password match           │
+│ 7. Session created with user info            │
+│ 8. User redirected to /weather               │
+│                                              │
+│ Preconditions:                               │
+│ - User exists in system                      │
+│ - Correct credentials provided               │
+│                                              │
+│ Postconditions:                              │
+│ - Session established                        │
+│ - User authenticated for requests            │
+│ - Access to weather features granted         │
+└──────────────────────────────────────────────┘
+```
+
+### 3. Search Weather
+```
+┌─────────────────┐
+│ Authenticated   │
+│ User            │
+└────┬────────────┘
+     │ initiates
+     ▼
+┌──────────────────────────────────────────────┐
+│ Search Current Weather                       │
+├──────────────────────────────────────────────┤
+│ Actors: User                                 │
+│ System: WeatherService, OpenWeather API      │
+│                                              │
+│ Flow:                                        │
+│ 1. User enters city name                     │
+│ 2. Flask validates session (user logged in)  │
+│ 3. Flask validates city input                │
+│ 4. WeatherService.get_current_weather()     │
+│ 5. Service makes HTTP request to API         │
+│ 6. API returns JSON with weather data        │
+│ 7. Service creates WeatherData object        │
+│ 8. Service calculates wind direction         │
+│ 9. Flask renders result.html with data       │
+│ 10. User views current weather               │
+│                                              │
+│ Preconditions:                               │
+│ - User authenticated (session active)        │
+│ - Valid city name provided                   │
+│ - API available and responding               │
+│                                              │
+│ Postconditions:                              │
+│ - Current weather displayed                  │
+│ - Data cached in response                    │
+│ - Request logged                             │
+└──────────────────────────────────────────────┘
+```
+
+### 4. View Forecast
+```
+┌─────────────────┐
+│ Authenticated   │
+│ User            │
+└────┬────────────┘
+     │ initiates
+     ▼
+┌──────────────────────────────────────────────┐
+│ View 5-Day Forecast                          │
+├──────────────────────────────────────────────┤
+│ Actors: User                                 │
+│ System: WeatherService, OpenWeather API      │
+│                                              │
+│ Flow:                                        │
+│ 1. User clicks "View Forecast" button        │
+│ 2. Flask validates session                   │
+│ 3. Flask extracts city from request          │
+│ 4. WeatherService.get_forecast() called      │
+│ 5. Service makes HTTP forecast API call      │
+│ 6. API returns JSON with 40 3-hour entries   │
+│ 7. Service extracts first 5 days             │
+│ 8. Service creates ForecastDay objects       │
+│ 9. Flask renders forecast.html with data     │
+│ 10. User views 5-day forecast                │
+│                                              │
+│ Preconditions:                               │
+│ - User authenticated                         │
+│ - City selected                              │
+│ - API available                              │
+│                                              │
+│ Postconditions:                              │
+│ - 5-day forecast displayed                   │
+│ - Daily data shown (temp, humidity, etc.)    │
+│ - Request logged                             │
+└──────────────────────────────────────────────┘
+```
+
+### 5. Logout
+```
+┌─────────────────┐
+│ Authenticated   │
+│ User            │
+└────┬────────────┘
+     │ initiates
+     ▼
+┌──────────────────────────────────────────────┐
+│ Logout (End Session)                         │
+├──────────────────────────────────────────────┤
+│ Actors: User                                 │
+│ System: Flask Session Manager                │
+│                                              │
+│ Flow:                                        │
+│ 1. User clicks "Logout" button               │
+│ 2. GET /logout endpoint called               │
+│ 3. Flask retrieves session user info         │
+│ 4. Flask logs logout event                   │
+│ 5. Flask clears session data                 │
+│ 6. Flask clears Flask session cookies        │
+│ 7. User redirected to /login                 │
+│ 8. User viewing login page                   │
+│                                              │
+│ Preconditions:                               │
+│ - User session exists                        │
+│ - User authenticated                         │
+│                                              │
+│ Postconditions:                              │
+│ - Session terminated                         │
+│ - Cookies cleared                            │
+│ - User unauthenticated                       │
+│ - Access to /weather blocked                 │
+└──────────────────────────────────────────────┘
 ```
 
 ---

@@ -1,7 +1,7 @@
-# DFD (Data Flow Diagram) - Weather App
+# DFD (Data Flow Diagram) - Weather App (Modular Architecture)
 
 ## Overview
-Data Flow Diagrams (DFD) show how data moves through the system at different levels of abstraction.
+Data Flow Diagrams (DFD) show how data moves through the system at different levels of abstraction with the new modular architecture.
 
 ---
 

@@ -1,93 +1,279 @@
-# Sequence Diagram - Weather App
+# Sequence Diagram - Weather App (Modular Architecture)
 
 ## Overview
-Sequence diagrams show the interactions between objects over time in a specific scenario.
+Sequence diagrams show interactions between objects over time with the new modular architecture (UserService, WeatherService, models).
 
 ---
 
-## Sequence Diagram 1: User Login Flow
+## Sequence Diagram 1: User Registration Flow
 
 ```
-User            Browser         Flask App       UserService        Logger
- │                │                │                │                │
- │─ Enter Email──→│                │                │                │
- │ & Password     │                │                │                │
- │                │                │                │                │
- │                │─ POST /login──→│                │                │
- │                │   (email, pwd) │                │                │
- │                │                │                │                │
- │                │                │─ Validate───→  │                │
- │                │                │ Input          │                │
- │                │                │                │                │
- │                │                │─ Load Users─→  │                │
- │                │                │                │─ Read File    │
- │                │                │                │    (users.json)
- │                │                │                │←─ Return Users─│
- │                │                │←─ Users Dict───│                │
- │                │                │                │                │
- │                │                │─ Verify──────→ │                │
- │                │                │ Credentials    │                │
- │                │                │                │                │
- │                │                │                │─ Log Info─────→│
- │                │                │                │   "Successful  │
- │                │                │                │   login"       │
- │                │                │                │                │
- │                │                │─ Create Session│                │
- │                │                │                │                │
- │                │←─ 302 Redirect─│                │                │
- │                │ /weather       │                │                │
- │                │                │                │                │
- │←─ Redirect───┤ │                │                │                │
- │ to Weather   │ │                │                │                │
- │              │                  │                │                │
- ▼              ▼                  ▼                ▼                ▼
+User          Browser         Flask (app.py)    UserService      File I/O      Logger
+ │              │                  │                │              │              │
+ │─ Click Signup→│                  │                │              │              │
+ │              │                  │                │              │              │
+ │              │                  │                │              │              │
+ │←─ signup.html─│                  │                │              │              │
+ │              │                  │                │              │              │
+ │─ Fill Form──→│                  │                │              │              │
+ │  (POST)      │                  │                │              │              │
+ │              │─ POST /signup──→  │                │              │              │
+ │              │   {email,         │                │              │              │
+ │              │    username,      │                │              │              │
+ │              │    password}      │                │              │              │
+ │              │                  │                │              │              │
+ │              │                  │─ register_user()→              │              │
+ │              │                  │   (email, username, pwd)       │              │
+ │              │                  │                │              │              │
+ │              │                  │                ├─ Load users──→│              │
+ │              │                  │                │  from file    │              │
+ │              │                  │                │←─ User data───│              │
+ │              │                  │                │              │              │
+ │              │                  │                ├─ Validate    │              │
+ │              │                  │                │  email       │              │
+ │              │                  │                │  unique?     │              │
+ │              │                  │                │              │              │
+ │              │                  │                ├─ Create User │              │
+ │              │                  │                │  object      │              │
+ │              │                  │                │              │              │
+ │              │                  │                ├─ Hash pwd    │              │
+ │              │                  │                │              │              │
+ │              │                  │                ├─ Save users──→│              │
+ │              │                  │                │  to file      │              │
+ │              │                  │                │←─ Success────│              │
+ │              │                  │                │              │              │
+ │              │                  │                ├─ Log────────────────────→   │
+ │              │                  │                │  "User registered"         │
+ │              │                  │                │              │              │
+ │              │                  │←─ Return True─  │              │              │
+ │              │                  │                │              │              │
+ │              │←─ Redirect to Login────────────────────────────────────────────→│
+ │              │                  │                │              │              │
+ │←─ success msg─│                  │                │              │              │
+ │              │                  │                │              │              │
+ ▼              ▼                  ▼                ▼              ▼              ▼
 ```
 
 ---
 
-## Sequence Diagram 2: Weather Search Flow
+## Sequence Diagram 2: User Login Flow
 
 ```
-User         Browser       Flask App       WeatherAPI      Logger
- │              │              │               │              │
- │─ Search ────→│              │               │              │
- │  City: London│              │               │              │
- │              │              │               │              │
- │              │─ POST /────→ │               │              │
- │              │  weather    │               │              │
- │              │  (city name)│               │              │
- │              │              │               │              │
- │              │              │─ Validate───→│              │
- │              │              │  City Input  │              │
- │              │              │              │              │
- │              │              │─ Check──────→│              │
- │              │              │  Session    │              │
- │              │              │ (Authenticated)
- │              │              │              │              │
- │              │              │─────────────→│ GET /weather│
- │              │              │  ?q=London   │ ?appid=KEY  │
- │              │              │              │              │
- │              │              │              │← 200 JSON ──│
- │              │              │←─────────────│ (Weather   │
- │              │              │   Data      │  Data)      │
- │              │              │              │              │
- │              │              │─ Extract───→│              │
- │              │              │  Data       │              │
- │              │              │              │              │
- │              │              │──────────────────────────→│
- │              │              │  Log Success              │
- │              │              │  Event                    │
- │              │              │              │              │
- │              │              │─ Get──────→ │              │
- │              │              │  Forecast   │              │
- │              │              │──────────────────→ GET /───│
- │              │              │            forecast│q=London
- │              │              │            ──────→│         │
- │              │              │              │← 200 JSON ──│
- │              │              │←─────────────│ (Forecast  │
- │              │              │   Data)     │  Data)      │
- │              │              │              │              │
- │              │              │─ Extract───→│              │
+User          Browser         Flask (app.py)    UserService       Logger
+ │              │                  │                │              │
+ │─ Click Login→│                  │                │              │
+ │              │                  │                │              │
+ │←─ login.html─│                  │                │              │
+ │              │                  │                │              │
+ │─ Enter Email→│                  │                │              │
+ │ & Password   │                  │                │              │
+ │              │─ POST /login────→│                │              │
+ │              │   (email, pwd)   │                │              │
+ │              │                  │                │              │
+ │              │                  │─ authenticate_user()→          │
+ │              │                  │   (email, password)            │
+ │              │                  │                │              │
+ │              │                  │                ├─ Load users  │
+ │              │                  │                │  from file   │
+ │              │                  │                │              │
+ │              │                  │                ├─ Find user   │
+ │              │                  │                │  by email    │
+ │              │                  │                │              │
+ │              │                  │                ├─ Verify pwd  │
+ │              │                  │                │  match       │
+ │              │                  │                │              │
+ │              │                  │                ├─ Create User │
+ │              │                  │                │  object      │
+ │              │                  │                │              │
+ │              │                  │                ├─ Log────────→│
+ │              │                  │                │  "Login OK"   │
+ │              │                  │                │              │
+ │              │                  │←─ Return User──│              │
+ │              │                  │                │              │
+ │              │                  ├─ Set Session  │              │
+ │              │                  │  (user_email,  │              │
+ │              │                  │   username)    │              │
+ │              │                  │                │              │
+ │              │                  ├─ Create       │              │
+ │              │                  │  Session obj   │              │
+ │              │                  │                │              │
+ │              │←─ 302 Redirect───────────────────────────────────→│
+ │              │  /weather        │                │              │
+ │              │                  │                │              │
+ │←─ Redirect──┤ │                  │                │              │
+ │             │                  │                │              │
+ ▼             ▼                  ▼                ▼              ▼
+```
+
+---
+
+## Sequence Diagram 3: Weather Search Flow
+
+```
+User         Browser       Flask App      WeatherService    OpenWeather API    Logger
+ │              │              │               │                  │              │
+ │─ Search ────→│              │               │                  │              │
+ │  City: London│              │               │                  │              │
+ │              │              │               │                  │              │
+ │              │─ POST /────→ │               │                  │              │
+ │              │  weather    │               │                  │              │
+ │              │  (city)     │               │                  │              │
+ │              │              │               │                  │              │
+ │              │              ├─ Check       │                  │              │
+ │              │              │  Session     │                  │              │
+ │              │              │  (auth OK)   │                  │              │
+ │              │              │               │                  │              │
+ │              │              ├─ get_current_weather("London")─→ │              │
+ │              │              │               │                  │              │
+ │              │              │               ├─ Validate input  │              │
+ │              │              │               │                  │              │
+ │              │              │               ├─ Make HTTP GET──→│              │
+ │              │              │               │  /data/2.5/      │              │
+ │              │              │               │  weather?q=...   │              │
+ │              │              │               │                  │              │
+ │              │              │               │←─ 200 OK (JSON)──│              │
+ │              │              │               │  {temp, humidity │              │
+ │              │              │               │   wind_speed, ...│
+ │              │              │               │                  │              │
+ │              │              │               ├─ Parse JSON      │              │
+ │              │              │               │                  │              │
+ │              │              │               ├─ Create          │              │
+ │              │              │               │  WeatherData obj │              │
+ │              │              │               │                  │              │
+ │              │              │               ├─ Calculate wind  │              │
+ │              │              │               │  direction       │              │
+ │              │              │               │                  │              │
+ │              │              │               ├─ Log──────────→  │              │
+ │              │              │               │  "Weather fetched│              │
+ │              │              │               │                  │              │
+ │              │              │←─ Return WeatherData object ──────│              │
+ │              │              │               │                  │              │
+ │              │              ├─ get_forecast("London")────→     │              │
+ │              │              │               │                  │              │
+ │              │              │               ├─ Make HTTP GET──→│              │
+ │              │              │               │  /data/2.5/      │              │
+ │              │              │               │  forecast?q=...  │              │
+ │              │              │               │                  │              │
+ │              │              │               │←─ 200 OK (JSON)──│              │
+ │              │              │               │  {list: [{...},  │              │
+ │              │              │               │         ...]}    │              │
+ │              │              │               │                  │              │
+ │              │              │               ├─ Parse JSON      │              │
+ │              │              │               │                  │              │
+ │              │              │               ├─ Extract 5 days  │              │
+ │              │              │               │                  │              │
+ │              │              │               ├─ Create          │              │
+ │              │              │               │  ForecastDay objs│              │
+ │              │              │               │                  │              │
+ │              │              │               ├─ Log──────────→  │              │
+ │              │              │               │  "Forecast OK"   │              │
+ │              │              │               │                  │              │
+ │              │              │←─ Return List[ForecastDay]───────│              │
+ │              │              │               │                  │              │
+ │              │              ├─ Render       │                  │              │
+ │              │              │  result.html  │                  │              │
+ │              │              │  with data    │                  │              │
+ │              │              │               │                  │              │
+ │              │←─ HTML Page──│               │                  │              │
+ │              │ with weather │               │                  │              │
+ │              │ & forecast   │               │                  │              │
+ │              │              │               │                  │              │
+ │←─ Display ───┤              │               │                  │              │
+ │  Results    │              │               │                  │              │
+ │              │              │               │                  │              │
+ ▼              ▼              ▼               ▼                  ▼              ▼
+```
+
+---
+
+## Sequence Diagram 4: Error Handling Flow
+
+```
+User         Browser       Flask App      WeatherService       Logger
+ │              │              │               │                 │
+ │─ Search ────→│              │               │                 │
+ │  Invalid City│              │               │                 │
+ │              │              │               │                 │
+ │              │─ POST /────→ │               │                 │
+ │              │  weather    │               │                 │
+ │              │  (invalid)  │               │                 │
+ │              │              │               │                 │
+ │              │              ├─ Check       │                 │
+ │              │              │  Session     │                 │
+ │              │              │  (auth OK)   │                 │
+ │              │              │               │                 │
+ │              │              ├─ get_current_weather()─→        │
+ │              │              │               │                 │
+ │              │              │               ├─ Validate       │
+ │              │              │               │  input fails    │
+ │              │              │               │                 │
+ │              │              │               ├─ Log──────────→ │
+ │              │              │               │  WARNING:       │
+ │              │              │               │  Invalid input  │
+ │              │              │               │                 │
+ │              │              │               ├─ Exception:     │
+ │              │              │               │  ValueError     │
+ │              │              │               │                 │
+ │              │              │←─ Return None──                │
+ │              │              │               │                 │
+ │              │              ├─ Check for    │                 │
+ │              │              │  None result  │                 │
+ │              │              │               │                 │
+ │              │              ├─ Log────────────────────→       │
+ │              │              │  ERROR: City not found          │
+ │              │              │                 │               │
+ │              │              ├─ Render       │                 │
+ │              │              │  error.html   │                 │
+ │              │              │  with message │                 │
+ │              │              │               │                 │
+ │              │←─ Error Page─│               │                 │
+ │              │ (HTML 400)   │               │                 │
+ │              │              │               │                 │
+ │←─ Display ───┤              │               │                 │
+ │  Error Msg  │              │               │                 │
+ │              │              │               │                 │
+ ▼              ▼              ▼               ▼                 ▼
+```
+
+---
+
+## Sequence Diagram 5: Logout Flow
+
+```
+User         Browser       Flask App      UserService         Logger
+ │              │              │               │                 │
+ │─ Click ─────→│              │               │                 │
+ │  Logout      │              │               │                 │
+ │              │              │               │                 │
+ │              │─ GET /──────→│               │                 │
+ │              │  logout      │               │                 │
+ │              │              │               │                 │
+ │              │              ├─ Check       │                 │
+ │              │              │  Session     │                 │
+ │              │              │  (exists)    │                 │
+ │              │              │               │                 │
+ │              │              ├─ Get user    │                 │
+ │              │              │  email from  │                 │
+ │              │              │  session     │                 │
+ │              │              │               │                 │
+ │              │              ├─ Log────────────────────→       │
+ │              │              │  INFO:                          │
+ │              │              │  User logged out                │
+ │              │              │               │                 │
+ │              │              ├─ Clear       │                 │
+ │              │              │  Session     │                 │
+ │              │              │               │                 │
+ │              │              ├─ Redirect    │                 │
+ │              │              │  /login      │                 │
+ │              │              │               │                 │
+ │              │←─ 302 Redir──│               │                 │
+ │              │  /login      │               │                 │
+ │              │              │               │                 │
+ │←─ Redirect──┤ │              │               │                 │
+ │ to Login    │              │               │                 │
+ │              │              │               │                 │
+ ▼              ▼              ▼               ▼                 ▼
+```
  │              │              │  Forecast   │              │
  │              │              │              │              │
  │              │              │─ Build Map──│              │
